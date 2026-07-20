@@ -733,7 +733,7 @@ class pyBIVAS:
         sql = """
         SELECT ArcID,
         SUM(arcStats.NumberOfTrips) AS "Aantal Vaarbewegingen (-)",
-        SUM(arcStats.NumberOfTrips * arcStats.AverageLoadWeight__t) AS "Totale Vracht (ton)",
+        SUM(arcStats.NumberOfTrips * arcStats.AverageLoad__t) AS "Totale Vracht (ton)",
         SUM(arcStats.AverageCosts__Eur) / SUM(arcStats.AverageDistance__km) AS "Gemiddelde kosten/km"
         FROM arc_usage_statistics_details_{0} AS arcStats
         GROUP BY ArcID
@@ -963,6 +963,7 @@ class pyBIVAS:
     """
 
     def network_arcs(self, outputfileshape=None, outputfilecsv=None):
+        from shapely import linestrings
         """Export all Arcs in BIVAS to geojsonfile"""
 
         sql = """
@@ -994,9 +995,18 @@ class pyBIVAS:
             arcs.to_csv(outputfilecsv)
 
         try: 
-            arcs['geometry'] = arcs.apply(lambda z: LineString(
-                [(z.X1, z.Y1), (z.X2, z.Y2)]), axis=1)
-            arcsgpd = geopandas.GeoDataFrame(arcs)
+            coords = np.stack(
+                [
+                    np.column_stack([arcs['X1'], arcs['Y1']]),
+                    np.column_stack([arcs['X2'], arcs['Y2']]),
+                ],
+                axis=1,
+            )
+
+            arcsgpd = geopandas.GeoDataFrame(
+                arcs,
+                geometry=linestrings(coords)
+            )
             arcsgpd.drop(['BranchSetId'], axis=1, inplace=True)
 
             if outputfileshape:
