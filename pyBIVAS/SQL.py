@@ -970,7 +970,6 @@ class pyBIVAS:
         SELECT arcs.*,
                arc_types.Label,
                arc_types.Description,
-               cemt_class.Description,
                cemt_class.MinimumAbsoluteUkc__m,
                cemt_class.MinimumRelativeUkc__m,
                N1.XCoordinate AS X1,
@@ -995,6 +994,7 @@ class pyBIVAS:
             arcs.to_csv(outputfilecsv)
 
         try: 
+            logger.info("Creating geometry for network arcs...")
             coords = np.stack(
                 [
                     np.column_stack([arcs['X1'], arcs['Y1']]),
